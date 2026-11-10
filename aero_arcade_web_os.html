@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aero Arcade — Nostalgia Web OS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom Frutiger Aero Styling */
+        @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        /* Animated Frutiger Aero Background */
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            background: linear-gradient(180deg, #1e5799 0%, #207cca 25%, #7db9e8 50%, #9be22d 51%, #3fa012 75%, #185a01 100%);
+            position: relative;
+        }
+
+        /* Background Sun Flare & Aurora */
+        .sky-glow {
+            position: absolute;
+            top: -10%;
+            right: 10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.2) 40%, rgba(255,255,255,0) 70%);
+            pointer-events: none;
+            border-radius: 50%;
+            filter: blur(20px);
+        }
+
+        .lens-flare {
+            position: absolute;
+            top: 15%;
+            right: 25%;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(255,230,150,0.8) 0%, rgba(255,255,255,0) 70%);
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        /* Floating Background Bubbles Canvas */
+        #bg-bubbles-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Aero Glass Window Container */
+        .aero-glass {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(200, 235, 255, 0.25) 50%, rgba(255, 255, 255, 0.35) 100%);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+            border-right: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            box-shadow: 
+                0 15px 35px rgba(0, 45, 90, 0.45),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        /* Window Header Bar */
+        .aero-header {
+            background: linear-gradient(180deg, 
+                rgba(255, 255, 255, 0.8) 0%, 
+                rgba(210, 240, 255, 0.6) 45%, 
+                rgba(140, 205, 255, 0.7) 46%, 
+                rgba(180, 225, 255, 0.8) 100%);
+            border-top-left-radius: 9px;
+            border-top-right-radius: 9px;
+            border-bottom: 1px solid rgba(0, 90, 160, 0.3);
+            text-shadow: 0 1px 1px rgba(255, 255, 255, 0.9);
+        }
+
+        /* Skeuomorphic Vista Gel Buttons */
+        .aero-btn {
+            background: linear-gradient(180deg, #e6f7ff 0%, #b3e5fc 48%, #00a8f3 49%, #0077c8 100%);
+            border: 1px solid #005691;
+            border-radius: 20px;
+            color: #ffffff;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0, 20, 50, 0.75);
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                inset 0 -1px 2px rgba(0, 40, 80, 0.4),
+                0 3px 6px rgba(0, 0, 0, 0.25);
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .aero-btn:hover {
+            background: linear-gradient(180deg, #f0faff 0%, #c8f0ff 48%, #33beff 49%, #0088e0 100%);
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                0 0 12px rgba(0, 170, 255, 0.6),
+                0 3px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .aero-btn:active {
+            background: linear-gradient(180deg, #0066ad 0%, #0084d6 50%, #0099f0 100%);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+            transform: translateY(1px);
+        }
+
+        /* Window Control Buttons */
+        .win-btn {
+            width: 26px;
+            height: 20px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+            cursor: pointer;
+        }
+
+        .win-close {
+            background: linear-gradient(180deg, #ff9999 0%, #e63946 50%, #b71c1c 100%);
+            color: white;
+        }
+        .win-close:hover {
+            background: linear-gradient(180deg, #ffb3b3 0%, #ff4d4d 50%, #d32f2f 100%);
+            box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+        }
+
+        .win-min, .win-max {
+            background: linear-gradient(180deg, #ffffff 0%, #d6e4f0 50%, #99bbd6 100%);
+            color: #1e3a8a;
+        }
+        .win-min:hover, .win-max:hover {
+            background: linear-gradient(180deg, #ffffff 0%, #e8f4fc 50%, #b3d1ff 100%);
+        }
+
+        /* Desktop Grid Icon */
+        .desktop-icon {
+            width: 90px;
+            padding: 10px 6px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .desktop-icon:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 15px rgba(0, 100, 200, 0.25);
+        }
+
+        .desktop-icon i {
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+        }
+
+        .desktop-icon span {
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 6px;
+            text-align: center;
+            text-shadow: 0 1px 3px rgba(0, 20, 50, 0.9), 0 0 8px rgba(0,0,0,0.7);
+        }
+
+        /* Taskbar Styling */
+        .aero-taskbar {
+            background: linear-gradient(180deg, 
+                rgba(255, 255, 255, 0.5) 0%, 
+                rgba(180, 225, 255, 0.3) 25%, 
+                rgba(40, 120, 200, 0.45) 50%, 
+                rgba(10, 50, 100, 0.65) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 -4px 20px rgba(0, 30, 70, 0.4);
+        }
+
+        /* Start Button Orb */
+        .start-orb {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #a6ecff 0%, #3498db 40%, #004b87 85%, #002b54 100%);
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 
+                0 0 12px rgba(52, 152, 219, 0.8),
+                inset 0 2px 4px rgba(255, 255, 255, 0.8),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .start-orb:hover {
+            transform: scale(1.08);
+            box-shadow: 
+                0 0 20px rgba(100, 220, 255, 1),
+                inset 0 2px 6px rgba(255, 255, 255, 1);
+        }
+
+        /* Start Menu */
+        .start-menu {
+            position: absolute;
+            bottom: 50px;
+            left: 10px;
+            width: 340px;
+            z-index: 100;
+            display: none;
+        }
+
+        .start-menu.active {
+            display: block;
+            animation: popUp 0.2s ease-out forwards;
+        }
+
+        @keyframes popUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Scrollbar for Aero UI */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(200, 230, 255, 0.3);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #70c1ff, #1976d2);
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+
+        /* Badge Status */
+        .status-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .badge-playable {
+            background: linear-gradient(180deg, #81c784, #388e3c);
+            color: white;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.4);
+            border: 1px solid #2e7d32;
+        }
+        .badge-soon {
+            background: linear-gradient(180deg, #ffb74d, #f57c00);
+            color: white;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.4);
+            border: 1px solid #ef6c00;
+        }
+
+        /* Game Canvas Style */
+        #gameCanvas {
+            background: radial-gradient(circle at 50% 30%, #e0f7fa 0%, #80deea 60%, #0097a7 100%);
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: inset 0 2px 10px rgba(0, 50, 100, 0.3);
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body class="flex flex-col justify-between">
+
+    <!-- Sun Flare Effects -->
+    <div class="sky-glow"></div>
+    <div class="lens-flare"></div>
+
+    <!-- Background Animated Bubbles Canvas -->
+    <canvas id="bg-bubbles-canvas"></canvas>
+
+    <!-- Top Web OS Header Bar -->
+    <header class="relative z-10 w-full px-4 py-2 flex items-center justify-between aero-glass border-b border-white/60 rounded-none">
+        <div class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-600 border border-white shadow-md flex items-center justify-center">
+                <i class="fa-solid font-bold text-white text-xs">✨</i>
+            </div>
+            <div>
+                <h1 class="text-sm font-bold text-slate-800 tracking-wide drop-shadow-sm flex items-center gap-2">
+                    AERO ARCADE <span class="text-xs font-normal text-blue-900 bg-white/40 px-2 py-0.5 rounded-full border border-white/50">v1.0 Web OS</span>
+                </h1>
+            </div>
+        </div>
+        <div class="flex items-center gap-4 text-xs font-semibold text-slate-800">
+            <button id="sound-toggle-btn" class="aero-btn px-3 py-1 text-xs">
+                <i class="fa-solid fa-volume-high text-cyan-100"></i> Audio: ON
+            </button>
+            <div class="hidden sm:block bg-white/30 px-3 py-1 rounded-full border border-white/40 shadow-inner">
+                <i class="fa-solid fa-graduation-cap text-blue-700 mr-1"></i> Student Dev Project
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Desktop Work Area -->
+    <main class="relative z-10 flex-1 p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 overflow-hidden">
+        
+        <!-- Left Side: Desktop Icons Grid (Col 1-2 on desktop) -->
+        <div class="lg:col-span-2 flex flex-row lg:flex-col flex-wrap gap-4 items-start justify-start">
+            <div class="desktop-icon" onclick="openGame('bubblePop')">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-300 via-sky-400 to-blue-600 flex items-center justify-center text-white text-2xl border-2 border-white/80 shadow-lg">
+                    <i class="fa-solid fa-soap"></i>
+                </div>
+                <span>Bubble Pop</span>
+            </div>
+
+            <div class="desktop-icon" onclick="showInfo('Aero Pinball', 'Coming in the next update! High-speed glass pinball mechanics.')">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl border-2 border-white/80 shadow-lg">
+                    <i class="fa-solid fa-circle-dot"></i>
+                </div>
+                <span>Aero Pinball</span>
+            </div>
+
+            <div class="desktop-icon" onclick="showInfo('Wave Runner', 'Cozy 2D endless surfer over vibrant Aero hills!')">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-300 via-teal-400 to-cyan-600 flex items-center justify-center text-white text-2xl border-2 border-white/80 shadow-lg">
+                    <i class="fa-solid fa-water"></i>
+                </div>
+                <span>Wave Runner</span>
+            </div>
+
+            <div class="desktop-icon" onclick="showInfo('Retro Blocks', 'Tetris-inspired glassy tile matcher game.')">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-300 via-orange-400 to-red-500 flex items-center justify-center text-white text-2xl border-2 border-white/80 shadow-lg">
+                    <i class="fa-solid fa-cubes"></i>
+                </div>
+                <span>Glass Blocks</span>
+            </div>
+
+            <div class="desktop-icon" onclick="toggleStartMenu()">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-100 via-sky-200 to-blue-400 flex items-center justify-center text-blue-900 text-2xl border-2 border-white/80 shadow-lg">
+                    <i class="fa-solid fa-circle-info"></i>
+                </div>
+                <span>About OS</span>
+            </div>
+        </div>
+
+        <!-- Center Window: Active Game Window (Col 3-9 on desktop) -->
+        <div class="lg:col-span-7 flex flex-col h-full min-h-[420px]">
+            <div class="aero-glass flex-1 flex flex-col overflow-hidden shadow-2xl border border-white/90">
+                <!-- Aero Window Title Bar -->
+                <div class="aero-header px-3 py-2 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-gamepad text-blue-800 text-sm"></i>
+                        <span class="text-xs font-bold text-slate-800 tracking-wide">Game Window: Aero Bubble Pop</span>
+                    </div>
+                    <!-- Windows Vista Action Controls -->
+                    <div class="flex items-center gap-1.5">
+                        <button class="win-btn win-min" title="Minimize"><i class="fa-solid fa-minus"></i></button>
+                        <button class="win-btn win-max" title="Maximize"><i class="fa-regular fa-square"></i></button>
+                        <button class="win-btn win-close" onclick="openGame('bubblePop')" title="Reset Window"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+
+                <!-- Window Main Content Area -->
+                <div class="flex-1 p-3 flex flex-col justify-between gap-3 bg-gradient-to-b from-white/30 to-white/10">
+                    <!-- HUD Score Board -->
+                    <div class="flex items-center justify-between bg-white/60 px-4 py-2 rounded-xl border border-white/80 shadow-sm text-slate-800 text-xs font-bold">
+                        <div class="flex items-center gap-4">
+                            <span class="flex items-center gap-1 text-blue-900">
+                                <i class="fa-solid fa-trophy text-amber-500"></i> Score: <span id="game-score" class="text-sm font-extrabold text-blue-700">0</span>
+                            </span>
+                            <span class="flex items-center gap-1 text-blue-900">
+                                <i class="fa-solid fa-burst text-cyan-600"></i> Popped: <span id="game-popped" class="text-sm font-extrabold text-cyan-700">0</span>
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="restart-game-btn" class="aero-btn px-3 py-1 text-xs">
+                                <i class="fa-solid fa-rotate-right"></i> Restart
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Canvas Playfield -->
+                    <div class="flex-1 relative flex items-center justify-center min-h-[260px] w-full">
+                        <canvas id="gameCanvas" class="w-full h-full max-h-[380px] object-contain"></canvas>
+                    </div>
+
+                    <!-- Game Control Hints -->
+                    <div class="text-center text-[11px] text-slate-700 font-semibold bg-white/30 py-1 rounded-lg border border-white/40">
+                        <i class="fa-solid fa-mouse-pointer text-blue-700 mr-1"></i> Left Click floating bubbles before they float away! Glossy larger bubbles give bonus points.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Game Library Shelf (Col 10-12 on desktop) -->
+        <div class="lg:col-span-3 flex flex-col gap-3">
+            <div class="aero-glass p-3 flex-1 flex flex-col gap-3">
+                <div class="aero-header -mx-3 -mt-3 p-2.5 mb-1 flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-blue-800"></i> Arcade Shelf
+                    </span>
+                    <span class="text-[10px] bg-blue-600 text-white font-bold px-2 py-0.5 rounded-full">4 Games</span>
+                </div>
+
+                <div class="flex-1 overflow-y-auto pr-1 flex flex-col gap-2.5">
+                    <!-- Shelf Item 1 -->
+                    <div class="bg-white/50 hover:bg-white/80 p-2.5 rounded-xl border border-white/80 shadow-sm transition-all cursor-pointer flex items-center justify-between" onclick="openGame('bubblePop')">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center text-white text-sm shadow">
+                                <i class="fa-solid fa-soap"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-800">Aero Bubble Pop</h4>
+                                <p class="text-[10px] text-slate-600">Casual / Physics</p>
+                            </div>
+                        </div>
+                        <span class="status-badge badge-playable">PLAYABLE</span>
+                    </div>
+
+                    <!-- Shelf Item 2 -->
+                    <div class="bg-white/40 hover:bg-white/60 p-2.5 rounded-xl border border-white/60 shadow-sm transition-all cursor-pointer flex items-center justify-between" onclick="showInfo('Aero Pinball', 'Coming soon! Glass physics pinball machine.')">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-indigo-400 to-purple-600 flex items-center justify-center text-white text-sm shadow">
+                                <i class="fa-solid fa-circle-dot"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-800">Aero Pinball</h4>
+                                <p class="text-[10px] text-slate-600">Arcade / Retro</p>
+                            </div>
+                        </div>
+                        <span class="status-badge badge-soon">SOON</span>
+                    </div>
+
+                    <!-- Shelf Item 3 -->
+                    <div class="bg-white/40 hover:bg-white/60 p-2.5 rounded-xl border border-white/60 shadow-sm transition-all cursor-pointer flex items-center justify-between" onclick="showInfo('Wave Runner', 'Coming soon! Endless hill surfer.')">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-emerald-400 to-teal-600 flex items-center justify-center text-white text-sm shadow">
+                                <i class="fa-solid fa-water"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-800">Wave Runner</h4>
+                                <p class="text-[10px] text-slate-600">Action / Runner</p>
+                            </div>
+                        </div>
+                        <span class="status-badge badge-soon">SOON</span>
+                    </div>
+
+                    <!-- Shelf Item 4 -->
+                    <div class="bg-white/40 hover:bg-white/60 p-2.5 rounded-xl border border-white/60 shadow-sm transition-all cursor-pointer flex items-center justify-between" onclick="showInfo('Glass Blocks', 'Coming soon! Tetris-style puzzle matcher.')">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-amber-400 to-orange-600 flex items-center justify-center text-white text-sm shadow">
+                                <i class="fa-solid fa-cubes"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-800">Glass Blocks</h4>
+                                <p class="text-[10px] text-slate-600">Puzzle / Aero</p>
+                            </div>
+                        </div>
+                        <span class="status-badge badge-soon">SOON</span>
+                    </div>
+                </div>
+
+                <!-- Banner Tip Box -->
+                <div class="p-2.5 bg-gradient-to-r from-blue-600/80 to-cyan-600/80 rounded-xl text-white text-[11px] border border-white/40 shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-lightbulb text-amber-300 text-base"></i>
+                    <div>
+                        <strong class="block">Dev Note:</strong>
+                        Build 1 polished game first, then deploy online for free!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Interactive Windows Vista Start Menu -->
+    <div id="startMenu" class="start-menu aero-glass p-3 shadow-2xl border-2 border-white/80">
+        <div class="flex items-center gap-3 p-2 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-lg text-white mb-3 shadow">
+            <div class="w-10 h-10 rounded-full bg-white/20 border border-white/60 flex items-center justify-center text-lg font-bold">
+                👤
+            </div>
+            <div>
+                <h3 class="text-sm font-bold leading-tight">Student Creator</h3>
+                <p class="text-[10px] text-cyan-100">Aero Arcade Web OS</p>
+            </div>
+        </div>
+        <div class="space-y-1 text-xs font-medium text-slate-800">
+            <a href="#" onclick="openGame('bubblePop'); toggleStartMenu();" class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/60 transition">
+                <i class="fa-solid fa-gamepad text-blue-600"></i> Launch Game 1: Bubble Pop
+            </a>
+            <a href="#" onclick="showInfo('Portal Vision', 'A nostalgic 2000s browser gaming platform built with vanilla JS and CSS glassmorphism.'); toggleStartMenu();" class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/60 transition">
+                <i class="fa-solid fa-compass text-cyan-600"></i> Platform Roadmap
+            </a>
+            <a href="#" onclick="showInfo('Tech Stack', 'HTML5 Canvas, Vanilla JS Engine, CSS Glassmorphism, Web Audio API.'); toggleStartMenu();" class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/60 transition">
+                <i class="fa-solid fa-code text-indigo-600"></i> Tech Stack Details
+            </a>
+            <hr class="border-white/40 my-2">
+            <a href="#" onclick="alert('System Status: Aero Arcade Web OS is running smoothly.'); toggleStartMenu();" class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/60 transition text-red-700">
+                <i class="fa-solid fa-power-off"></i> System Restart
+            </a>
+        </div>
+    </div>
+
+    <!-- Bottom Taskbar -->
+    <footer class="relative z-20 w-full h-11 px-3 aero-taskbar flex items-center justify-between">
+        <!-- Start Orb & Open Task Items -->
+        <div class="flex items-center gap-3">
+            <button class="start-orb" onclick="toggleStartMenu()" title="Start Aero Arcade Menu">
+                ❖
+            </button>
+            <div class="flex items-center gap-2">
+                <div class="bg-white/50 border border-white/80 px-3 py-1 rounded-lg text-xs font-bold text-slate-800 flex items-center gap-2 shadow-sm cursor-pointer">
+                    <i class="fa-solid fa-soap text-blue-600"></i> Bubble Pop (Active)
+                </div>
+            </div>
+        </div>
+
+        <!-- Taskbar Tray / Live Clock -->
+        <div class="flex items-center gap-3 text-xs font-semibold text-slate-800 bg-white/30 px-3 py-1 rounded-lg border border-white/40">
+            <i class="fa-solid fa-wifi text-blue-800"></i>
+            <div id="live-clock" class="tracking-wider text-blue-950 font-bold">12:00:00 PM</div>
+        </div>
+    </footer>
+
+    <!-- Custom Modal Popup for Info Messages -->
+    <div id="infoModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="aero-glass w-full max-w-sm p-4 border-2 border-white/90 shadow-2xl">
+            <div class="aero-header -mx-4 -mt-4 p-3 mb-3 flex items-center justify-between">
+                <span id="modalTitle" class="text-xs font-bold text-slate-800">System Notification</span>
+                <button onclick="closeModal()" class="win-btn win-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p id="modalBody" class="text-xs text-slate-800 font-medium mb-4">Notification details go here.</p>
+            <div class="text-right">
+                <button onclick="closeModal()" class="aero-btn px-4 py-1.5 text-xs">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Game Logic & System Scripts -->
+    <script>
+        /* -------------------------------------------------------------
+           1. Web Audio API Sound Synthesizer (No external sound files needed!)
+        ------------------------------------------------------------- */
+        let audioEnabled = true;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function playBubbleSound() {
+            if (!audioEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new AudioCtx();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                // Pitch slide up for aquatic pop effect
+                const now = audioCtx.currentTime;
+                osc.frequency.setValueAtTime(400 + Math.random() * 200, now);
+                osc.frequency.exponentialRampToValueAtTime(800 + Math.random() * 300, now + 0.08);
+
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } catch (e) {
+                console.log("Audio not allowed yet");
+            }
+        }
+
+        document.getElementById('sound-toggle-btn').addEventListener('click', () => {
+            audioEnabled = !audioEnabled;
+            const btn = document.getElementById('sound-toggle-btn');
+            if (audioEnabled) {
+                btn.innerHTML = `<i class="fa-solid fa-volume-high text-cyan-100"></i> Audio: ON`;
+            } else {
+                btn.innerHTML = `<i class="fa-solid fa-volume-xmark text-red-200"></i> Audio: OFF`;
+            }
+        });
+
+        /* -------------------------------------------------------------
+           2. Background Floating Ambient Bubbles Canvas
+        ------------------------------------------------------------- */
+        const bgCanvas = document.getElementById('bg-bubbles-canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        let bgBubbles = [];
+
+        function resizeBgCanvas() {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeBgCanvas);
+        resizeBgCanvas();
+
+        class BgBubble {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * bgCanvas.width;
+                this.y = bgCanvas.height + Math.random() * 100;
+                this.radius = 8 + Math.random() * 24;
+                this.speed = 0.5 + Math.random() * 1.5;
+                this.wobble = Math.random() * Math.PI * 2;
+                this.wobbleSpeed = 0.02 + Math.random() * 0.03;
+                this.opacity = 0.2 + Math.random() * 0.4;
+            }
+            update() {
+                this.y -= this.speed;
+                this.wobble += this.wobbleSpeed;
+                this.x += Math.sin(this.wobble) * 0.8;
+                if (this.y + this.radius < 0) {
+                    this.reset();
+                }
+            }
+            draw() {
+                bgCtx.beginPath();
+                bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                
+                // Glossy gradient highlight
+                const grad = bgCtx.createRadialGradient(
+                    this.x - this.radius * 0.3, 
+                    this.y - this.radius * 0.3, 
+                    this.radius * 0.1, 
+                    this.x, 
+                    this.y, 
+                    this.radius
+                );
+                grad.addColorStop(0, `rgba(255, 255, 255, ${this.opacity})`);
+                grad.addColorStop(0.6, `rgba(180, 230, 255, ${this.opacity * 0.5})`);
+                grad.addColorStop(1, `rgba(0, 150, 255, ${this.opacity * 0.8})`);
+                
+                bgCtx.fillStyle = grad;
+                bgCtx.fill();
+                bgCtx.strokeStyle = `rgba(255, 255, 255, ${this.opacity * 0.9})`;
+                bgCtx.lineWidth = 1.5;
+                bgCtx.stroke();
+            }
+        }
+
+        for (let i = 0; i < 25; i++) {
+            bgBubbles.push(new BgBubble());
+        }
+
+        function animateBgBubbles() {
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            bgBubbles.forEach(b => {
+                b.update();
+                b.draw();
+            });
+            requestAnimationFrame(animateBgBubbles);
+        }
+        animateBgBubbles();
+
+        /* -------------------------------------------------------------
+           3. Game 1: Interactive HTML5 Canvas Aero Bubble Pop Game
+        ------------------------------------------------------------- */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let score = 0;
+        let poppedCount = 0;
+        let gameBubbles = [];
+        let particles = [];
+
+        function resizeGameCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        window.addEventListener('resize', resizeGameCanvas);
+        resizeGameCanvas();
+
+        class GameBubble {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.radius = 16 + Math.random() * 26;
+                this.x = this.radius + Math.random() * (canvas.width - this.radius * 2);
+                this.y = canvas.height + this.radius + Math.random() * 50;
+                this.speed = 1.2 + Math.random() * 2.0;
+                this.vx = (Math.random() - 0.5) * 1.5;
+                this.colorHue = 180 + Math.random() * 40; // Turquoise to bright blue
+            }
+            update() {
+                this.y -= this.speed;
+                this.x += this.vx;
+
+                // Bounce off canvas walls
+                if (this.x - this.radius < 0 || this.x + this.radius > canvas.width) {
+                    this.vx *= -1;
+                }
+
+                if (this.y + this.radius < -20) {
+                    this.reset();
+                }
+            }
+            draw() {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+
+                // Skeuomorphic glossy bubble fill
+                const grad = ctx.createRadialGradient(
+                    this.x - this.radius * 0.35,
+                    this.y - this.radius * 0.35,
+                    this.radius * 0.05,
+                    this.x,
+                    this.y,
+                    this.radius
+                );
+                grad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+                grad.addColorStop(0.4, `hsla(${this.colorHue}, 90%, 75%, 0.6)`);
+                grad.addColorStop(0.8, `hsla(${this.colorHue}, 100%, 45%, 0.7)`);
+                grad.addColorStop(1, 'rgba(255, 255, 255, 0.9)');
+
+                ctx.fillStyle = grad;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Specular light arc reflection
+                ctx.beginPath();
+                ctx.arc(this.x - this.radius * 0.2, this.y - this.radius * 0.2, this.radius * 0.5, Math.PI * 1.2, Math.PI * 1.8);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+                ctx.restore();
+            }
+        }
+
+        class SplashParticle {
+            constructor(x, y, hue) {
+                this.x = x;
+                this.y = y;
+                this.radius = 2 + Math.random() * 4;
+                this.vx = (Math.random() - 0.5) * 6;
+                this.vy = (Math.random() - 0.5) * 6;
+                this.alpha = 1;
+                this.hue = hue;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= 0.04;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `hsl(${this.hue}, 90%, 70%)`;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function initGame() {
+            score = 0;
+            poppedCount = 0;
+            updateHUD();
+            gameBubbles = [];
+            particles = [];
+            for (let i = 0; i < 12; i++) {
+                const b = new GameBubble();
+                b.y = Math.random() * canvas.height;
+                gameBubbles.push(b);
+            }
+        }
+
+        function updateHUD() {
+            document.getElementById('game-score').innerText = score;
+            document.getElementById('game-popped').innerText = poppedCount;
+        }
+
+        // Click Handler for Pop Mechanic
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            for (let i = gameBubbles.length - 1; i >= 0; i--) {
+                const b = gameBubbles[i];
+                const dist = Math.hypot(mouseX - b.x, mouseY - b.y);
+                if (dist < b.radius) {
+                    // Pop bubble!
+                    playBubbleSound();
+                    score += Math.round(500 / b.radius); // Bigger points for smaller/faster bubbles
+                    poppedCount += 1;
+                    updateHUD();
+
+                    // Create splash particles
+                    for (let p = 0; p < 10; p++) {
+                        particles.push(new SplashParticle(b.x, b.y, b.colorHue));
+                    }
+
+                    b.reset();
+                    break;
+                }
+            }
+        });
+
+        document.getElementById('restart-game-btn').addEventListener('click', initGame);
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update & draw particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                p.draw();
+                if (p.alpha <= 0) particles.splice(i, 1);
+            }
+
+            // Update & draw bubbles
+            gameBubbles.forEach(b => {
+                b.update();
+                b.draw();
+            });
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        /* -------------------------------------------------------------
+           4. System Desktop Features (Clock, Start Menu, Info Modal)
+        ------------------------------------------------------------- */
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            document.getElementById('live-clock').innerText = `${hours}:${minutes}:${seconds} ${ampm}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function toggleStartMenu() {
+            const menu = document.getElementById('startMenu');
+            menu.classList.toggle('active');
+        }
+
+        function showInfo(title, body) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalBody').innerText = body;
+            document.getElementById('infoModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('infoModal').classList.add('hidden');
+        }
+
+        function openGame(gameKey) {
+            if (gameKey === 'bubblePop') {
+                initGame();
+            }
+        }
+
+        // Initialize Everything on Load
+        window.onload = function() {
+            resizeGameCanvas();
+            initGame();
+            gameLoop();
+        };
+    </script>
+</body>
+</html>
